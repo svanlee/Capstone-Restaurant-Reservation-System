@@ -4,16 +4,6 @@
 Periodic Tables is a restaurant reservation booking and table management system. Users of this application can view, create, edit, and delete reservations. Users can also search for reservations via mobile-number. Users can create new tables and seat reservations at a specific table. When seating the reservation at a table, validation will occur to ensure that the table size is of capable capacity for the reservation.
 
 #
-## Active Example
-<<<<<<< HEAD
-* Vercel.com(fronend): <hidden>https://restaurant-reservation-app-omega.vercel.app/dashboard
-* Render.com(backend): <hidden>https://thebackendofallbackends.onrender.com
-* Github Code: https://github.com/ZleoZack/Restaurant-Reservation-App
-=======
-* Vercel.com(fronend): https://restaurant-reservation-app-omega.vercel.app/dashboard
-* Render.com(backend): https://thebackendofallbackends.onrender.com
-* Github Code: https://github.com/svanlee/Capstone-Restaurant-Reservation-System
->>>>>>> 67bb7149c0aeb0266a746530818ccf4083c5b141
 
 ## Technologies used
 _Back end:_
