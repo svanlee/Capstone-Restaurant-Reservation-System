@@ -10,20 +10,31 @@ const onPageConsole = (msg) =>
     console.log(`<LOG::page console ${msg.type()}>`, ...eventJson)
   );
 
-describe("US-03 - Create reservation on a future, working date - E2E", () => {
+setDefaultOptions({
+  timeout: 1000,
+  puppeteerLaunchOptions: {
+    slowMo: 50,
+    args: [
+      '--window-size=1920,1080',
+      '--disable-dev-shm-usage',
+      '--no-sandbox',
+      '--single-process'
+    ]
+  }
+});
+
+describe("Reservation E2E tests", () => {
   let page;
   let browser;
 
   beforeAll(async () => {
     await fsPromises.mkdir("./.screenshots", { recursive: true });
-    setDefaultOptions({ timeout: 1000 });
   });
 
   beforeEach(async () => {
     browser = await puppeteer.launch();
     page = await browser.newPage();
     page.on("console", onPageConsole);
-    await page.setViewport({ width: 1920, height: 1080 });
     await page.goto(`${baseURL}/reservations/new`, { waitUntil: "load" });
   });
 
@@ -39,9 +50,11 @@ describe("US-03 - Create reservation on a future, working date - E2E", () => {
       await page.type("input[name=people]", "3");
     });
 
-    test("displays an error message if reservation time is before 10:30 AM", async () => {
+    it("displays an error message if reservation time is before 10:30 AM", async () => {
       await page.type("input[name=reservation_date]", "02022035");
       await page.type("input[name=reservation_time]", "10:15AM");
+
+      await expect(page).toMatchElement("h1", { text: "Make A Reservation" });
 
       await page.screenshot({
         path: ".screenshots/us-02-reservation-too-early-before.png",
@@ -49,16 +62,21 @@ describe("US-03 - Create reservation on a future, working date - E2E", () => {
 
       await page.click("button[type=submit]");
 
+      await page.waitForSelector(".alert-danger");
+
       await page.screenshot({
         path: ".screenshots/us-02-reservation-too-early-after.png",
       });
 
       expect(await page.$(".alert-danger")).toBeTruthy();
+      expect(await page.evaluate(() => document.querySelector("body").textContent)).toContain("Reservation time must be after 10:30 AM");
     });
 
-    test("displays an error message if reservation time is too close to close time", async () => {
+    it("displays an error message if reservation time is too close to close time", async () => {
       await page.type("input[name=reservation_date]", "02022035");
       await page.type("input[name=reservation_time]", "1005PM");
+
+      await expect(page).toMatchElement("h1", { text: "Make A Reservation" });
 
       await page.screenshot({
         path: ".screenshots/us-02-reservation-almost-closing-before.png",
@@ -68,16 +86,21 @@ describe("US-03 - Create reservation on a future, working date - E2E", () => {
 
       await page.click("button[type=submit]");
 
+      await page.waitForSelector(".alert-danger");
+
       await page.screenshot({
         path: ".screenshots/us-02-reservation-almost-closing-after.png",
       });
 
       expect(await page.$(".alert-danger")).toBeTruthy();
+      expect(await page.evaluate(() => document.querySelector("body").textContent)).toContain("Reservation time must be at least 30 minutes before closing");
     });
 
-    test("displays an error message if reservation time is after the close time", async () => {
+    it("displays an error message if reservation time is after the close time", async () => {
       await page.type("input[name=reservation_date]", "02022035");
       await page.type("input[name=reservation_time]", "1045PM");
+
+      await expect(page).toMatchElement("h1", { text: "Make A Reservation" });
 
       await page.screenshot({
         path: ".screenshots/us-02-reservation-too-late-before.png",
@@ -87,11 +110,14 @@ describe("US-03 - Create reservation on a future, working date - E2E", () => {
 
       await page.click("button[type=submit]");
 
+      await page.waitForSelector(".alert-danger");
+
       await page.screenshot({
         path: ".screenshots/us-02-reservation-too-late-after.png",
       });
 
       expect(await page.$(".alert-danger")).toBeTruthy();
+      expect(await page.evaluate(() => document.querySelector("body").textContent)).toContain("Reservation time must be at least 30 minutes before closing");
     });
   });
 });
