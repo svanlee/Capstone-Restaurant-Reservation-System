@@ -1,7 +1,19 @@
-const environment = process.env.NODE_ENV || "development";
-const config = require("../../knexfile")[environment];
-const knex = require("knex")(config);
+// Import required modules
+const { NODE_ENV } = process.env;
+const path = require("path");
+const knex = require("knex");
 
-module.exports = knex;
+// Define the environment or default to 'development'
+const environment = NODE_ENV || "development";
 
-//Allows for our connection to KNEX to work with our .env and sets the value to development also required specifications within the KNEX library such as configuration and environment variables
+// Set the path to the knexfile based on the environment
+const configPath = path.join(__dirname, `../../knexfile.${environment}.js`);
+
+// Import the knexfile configuration
+const config = require(configPath);
+
+// Initialize the knex instance with the configuration
+const db = knex(config);
+
+// Export the knex instance
+module.exports = db;
