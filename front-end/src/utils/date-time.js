@@ -1,10 +1,10 @@
-const dateFormat = /\d\d\d\d-\d\d-\d\d/;
-const timeFormat = /\d\d:\d\d/;
+const dateFormat = /\d{4}-\d{2}-\d{2}/;
+const timeFormat = /\d{2}:\d{2}/;
 
 /**
  * Formats a Date object as YYYY-MM-DD.
  *
- * This function is *not* exported because the UI should generally avoid working directly with Date instance.
+ * This function is *not* exported because the UI should generally avoid working directly with Date instances.
  * You may export this function if you need it.
  *
  * @param date
@@ -12,89 +12,111 @@ const timeFormat = /\d\d:\d\d/;
  * @returns {string}
  *  the specified Date formatted as YYYY-MM-DD
  */
-function asDateString(date) {
-  return `${date.getFullYear().toString(10)}-${(date.getMonth() + 1)
-    .toString(10)
-    .padStart(2, "0")}-${date.getDate().toString(10).padStart(2, "0")}`;
+function asDateString(date: Date): string {
+  return `${date.getFullYear()}-${(date.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
 }
 
 /**
- * Format a date string in ISO-8601 format (which is what is returned from PostgreSQL) as YYYY-MM-DD.
+ * Format an ISO-8601 date string as YYYY-MM-DD.
+ *
  * @param dateString
  *  ISO-8601 date string
- * @returns {*}
+ * @returns {string}
  *  the specified date string formatted as YYYY-MM-DD
  */
-export function formatAsDate(dateString) {
-  return dateString.match(dateFormat)[0];
+export function formatAsDate(dateString: string): string {
+  if (!dateString.match(dateFormat)) {
+    throw new Error("Invalid date string");
+  }
+  return dateString.slice(0, 10);
 }
 
 /**
- * Format a time string in HH:MM:SS format (which is what is returned from PostgreSQL) as HH:MM.
+ * Format an ISO-8601 time string as HH:MM.
+ *
  * @param timeString
- *  HH:MM:SS time string
- * @returns {*}
- *  the specified time string formatted as YHH:MM.
+ *  ISO-8601 time string
+ * @returns {string}
+ *  the specified time string formatted as HH:MM
  */
-export function formatAsTime(timeString) {
-  return timeString.match(timeFormat)[0];
+export function formatAsTime(timeString: string): string {
+  if (!timeString.match(timeFormat)) {
+    throw new Error("Invalid time string");
+  }
+  return timeString.slice(0, 5);
 }
 
 /**
  * Today's date as YYYY-MM-DD.
- * @returns {*}
+ *
+ * @returns {string}
  *  the today's date formatted as YYYY-MM-DD
  */
-export function today() {
+export function today(): string {
   return asDateString(new Date());
 }
 
 /**
- * Subtracts one day to the specified date and return it in as YYYY-MM-DD.
+ * Subtracts one day from the specified date and return it in YYYY-MM-DD format.
+ *
  * @param currentDate
  *  a date string in YYYY-MM-DD format (this is also ISO-8601 format)
- * @returns {*}
+ * @returns {string}
  *  the date one day prior to currentDate, formatted as YYYY-MM-DD
  */
-export function previous(currentDate) {
-  let [ year, month, day ] = currentDate.split("-");
-  month -= 1;
-  const date = new Date(year, month, day);
-  date.setMonth(date.getMonth());
+export function previous(currentDate: string): string {
+  const [year, month, day] = currentDate.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
   date.setDate(date.getDate() - 1);
   return asDateString(date);
 }
 
 /**
- * Adds one day to the specified date and return it in as YYYY-MM-DD.
+ * Adds one day to the specified date and return it in YYYY-MM-DD format.
+ *
  * @param currentDate
  *  a date string in YYYY-MM-DD format (this is also ISO-8601 format)
- * @returns {*}
+ * @returns {string}
  *  the date one day after currentDate, formatted as YYYY-MM-DD
  */
-export function next(currentDate) {
-  let [ year, month, day ] = currentDate.split("-");
-  month -= 1;
-  const date = new Date(year, month, day);
-  date.setMonth(date.getMonth());
+export function next(currentDate: string): string {
+  const [year, month, day] = currentDate.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
   date.setDate(date.getDate() + 1);
   return asDateString(date);
 }
 
-//Support for more validation methods to ensure our users are not disappointed by a mistake made on our end; edge-case
-export function isNotOnTuesday(reservation_date, errors) {
-  const [year, month, day] = reservation_date.split("-");
-  const date = new Date(`${month} ${day}, ${year}`);
+/**
+ * Checks if the specified date is not on a Tuesday.
+ *
+ * @param reservation_date
+ *  a date string in YYYY-MM-DD format
+ * @param errors
+ *  an array of error messages
+ */
+export function isNotOnTuesday(reservation_date: string, errors: Array<string>): void {
+  const [year, month, day] = reservation_date.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
   if (date.getDay() === 2) {
-    errors.push(<li key="tuesday">Restaurant is closed on Tuesdays</li>);
+    errors.push("Restaurant is closed on Tuesdays");
   }
 }
 
-export function isInTheFuture(reservation_date, errors) {
-  const [year, month, day] = reservation_date.split("-");
-  const date = new Date(`${month} ${day}, ${year}`);
-  const today = new Date();
-  if (date < today) {
-    errors.push(<li key="past">Reservation must be in the future</li>);
+/**
+ * Checks if the specified date is in the future.
+ *
+ * @param reservation_date
+ *  a date string in YYYY-MM-DD format
+ * @param errors
+ *  an array of error messages
+ */
+export function isInTheFuture(reservation_date: string, errors: Array<string>): void {
+  const [year, month, day] = reservation_date.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  const now = new Date();
+  if (date < now) {
+    errors.push("Reservation must be in the future");
   }
 }
