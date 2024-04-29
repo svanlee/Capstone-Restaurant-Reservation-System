@@ -1,6 +1,7 @@
 import React from "react";
 import { Route, Switch } from "react-router-dom";
 import Layout from "./layout/Layout";
+import NoMatch from "./components/NoMatch";
 
 /**
  * Defines the root application component.
@@ -9,11 +10,10 @@ import Layout from "./layout/Layout";
 function App() {
   return (
     <Switch>
-      <Route path="/">
+      <Route exact path="/">
         <Layout />
       </Route>
-    </Switch>
-  );
-}
-
-export default App;
+      <Route path="*">
+        <NoMatch />
+      </Route>
+   
