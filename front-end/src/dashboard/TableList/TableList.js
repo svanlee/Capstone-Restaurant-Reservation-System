@@ -2,13 +2,25 @@ import React from "react";
 import TableInfo from "./TableInfo";
 
 export default function TableList({ tables, loadDashboard }) {
-  if (!tables) {
+  if (!tables || tables.length === 0) {
     return null;
   }
-//Formatted is being written up top here in order for us to call it later in REACT's smooth functionality by simply passing it in a <tbody> element
+
   const formatted = tables.map((table) => {
+    const tableKey = table.table_id || table.index; // use index as a fallback key
+    const capacity = table.capacity || "N/A";
+    const status = table.status || "N/A";
+    const finish = table.finish ? new Date(table.finish).toLocaleString() : "N/A";
+
     return (
-      <TableInfo key={table.table_id} table={table} loadDashboard={loadDashboard} />
+      <TableInfo
+        key={tableKey}
+        table={table}
+        loadDashboard={loadDashboard}
+        capacity={capacity}
+        status={status}
+        finish={finish}
+      />
     );
   });
 
@@ -29,3 +41,4 @@ export default function TableList({ tables, loadDashboard }) {
     </div>
   );
 }
+
