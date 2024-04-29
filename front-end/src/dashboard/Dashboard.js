@@ -25,7 +25,7 @@ function Dashboard({ date }) {
     setReservationsError(null);
     listReservations({ date }, abortController.signal)
       .then(setReservations)
-      .then(listTables)
+      .then(() => listTables({}, abortController.signal))
       .then(setTables)
       .catch(setReservationsError);
     return () => abortController.abort();
@@ -37,9 +37,11 @@ function Dashboard({ date }) {
 
   function handlePrev() {
     const newDate = previous(date);
-    history.push(`/dashboard?date=${newDate}`);
+    if (newDate) {
+      history.push(`/dashboard?date=${newDate}`);
+    }
   }
-//Here is all of our functionality working with the passing of props. onClick and submitHandlers, this functionality will instruct the UI to handle, execute, and process, with JavaScript syntax implemented to increase the ease and over-all intricacy of the web-page/application
+
   function handleNext() {
     history.push(`/dashboard?date=${next(date)}`);
   }
@@ -63,12 +65,13 @@ function Dashboard({ date }) {
       </div>
       <ErrorAlert error={reservationsError} />
       <ReservationTable
+        key={reservations.join("")}
         reservations={reservations}
         setReservations={setReservations}
         setError={setReservationsError}
       />
       <div>
-        <TableList tables={tables} loadDashboard={loadDashboard} />
+        <TableList key={tables.join("")} tables={tables} loadDashboard={loadDashboard} />
       </div>
     </main>
   );
