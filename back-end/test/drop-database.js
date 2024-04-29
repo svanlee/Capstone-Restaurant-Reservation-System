@@ -1,14 +1,38 @@
 const path = require("path");
+const dotenv = require("dotenv");
+const knex = require("knex");
 
-require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
+// Load environment variables from .env file
+dotenv.config({ path: path.join(__dirname, "..", ".env") });
 
-const knex = require("../src/db/connection");
+// Initialize the Knex database connection
+const db = knex({
+  client: "pg",
+  connection: process.env.DB_CONNECTION_STRING,
+});
 
-knex.migrate
-  .forceFreeMigrationsLock()
-  .then(() => knex.migrate.rollback(null, true))
-  .then(() => knex.migrate.latest())
-  .then(() => knex.seed.run())
-  .then(() => console.log("Dropped and seeded database"))
-  .then(() => knex.destroy())
-  .catch((error) => console.error("Failed to drop and seed database", error));
+const migrateAndSeed = async () => {
+  try {
+    // Ensure no other migrations are running
+    await db.migrate.forceFreeMigrationsLock();
+
+    // Rollback any active migrations
+    await db.migrate.rollback(null, true);
+
+    // Run the latest available migration
+    await db.migrate.latest();
+
+    // Run database seeds
+    await db.seed.run();
+
+    console.log("Dropped and seeded database");
+  } catch (error) {
+    console.error("Failed to drop and seed database", error);
+  } finally {
+    // Close the database connection
+    await db.destroy();
+  }
+};
+
+migrateAndSeed();
+
