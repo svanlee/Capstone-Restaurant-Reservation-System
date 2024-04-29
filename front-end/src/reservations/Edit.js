@@ -16,7 +16,7 @@ export default function Edit() {
       const ac = new AbortController();
       try {
         const reservation = await findReservation(reservation_id, ac.signal);
-        setReservationData(reservation);
+        setReservationData({ ...reservation, people: Number(reservation.people) });
       } catch (error) {
         setError(error);
       }
@@ -24,28 +24,32 @@ export default function Edit() {
     }
     loadReservation();
   }, [reservation_id]);
-//On this page is all of the functionality with Editing any of the information associated with our FORM, we pass in its initial state, using React's Hook useState and then following up with our onSubmit functionality and our handleFormChange and how we manipulate data in the DOM.
-  const findErrors = (res, errors) => {
-    isNotOnTuesday(res.reservation_date, errors);
-    isInTheFuture(res.reservation_date, errors);
-    if (res.status && res.status !== "booked") {
+
+  const findErrors = (reservation) => {
+    const errors = [];
+    if (isNotOnTuesday(reservation.reservation_date)) {
+      errors.push(<li key="tuesday">Reservations cannot be made on Tuesdays</li>);
+    }
+    if (isInTheFuture(reservation.reservation_date)) {
+      errors.push(<li key="future">Reservation date must not be in the future</li>);
+    }
+    if (reservation.status && reservation.status !== "booked") {
       errors.push(
         <li key="not booked">Reservation can no longer be changed</li>
       );
     }
+    return errors;
   };
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const ac = new AbortController();
-    const errors = [];
-    findErrors(reservationData, errors);
+    const errors = findErrors(reservationData);
     if (errors.length) {
       setError({ message: errors });
       return;
     }
+    const ac = new AbortController();
     try {
-      reservationData.people = Number(reservationData.people);
       await modifyReservation(reservation_id, reservationData, ac.signal);
       history.push(`/dashboard?date=${reservationData.reservation_date}`);
     } catch (error) {
@@ -64,11 +68,13 @@ export default function Edit() {
   return (
     <>
       <ErrorAlert error={error} />
-      <Form
-        initialformData={reservationData}
-        handleFormChange={handleFormChange}
-        handleSubmit={handleSubmit}
-      />
+      {reservationData && (
+        <Form
+          initialformData={reservationData}
+          handleFormChange={handleFormChange}
+          handleSubmit={handleSubmit}
+        />
+      )}
     </>
   );
 }
