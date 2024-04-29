@@ -10,14 +10,13 @@ const COMPLETED_RESERVATION_FIELDS = [
   "people",
 ];
 
-//function for requiring certain time conditions are met before helper functionality is implemented, then follows CRUD operations
 function _validateTime(string) {
   const [hour, minute] = string.split(":");
 
   if (hour.length > 2 || minute.length > 2) {
     return false;
   }
-  if (hour < 1 || hour > 23) {
+  if (hour < 0 || hour > 23) {
     return false;
   }
   if (minute < 0 || minute > 59) {
@@ -26,7 +25,6 @@ function _validateTime(string) {
   return true;
 }
 
-//requires the certain conditions are met before executing CRUD operations per; the exports below
 function isValidReservation(req, res, next) {
   const reservation = req.body.data;
 
@@ -53,6 +51,14 @@ function isValidReservation(req, res, next) {
     if (input === "reservation_time") {
       if (!_validateTime(reservation[input])) {
         return next({ status: 400, message: `${input} is not a valid time` });
+      }
+
+      const [hour, minute] = reservation[input].split(":");
+      const inputDate = new Date();
+      inputDate.setHours(hour, minute, 0);
+
+      if (inputDate < new Date()) {
+        return next({ status: 400, message: `${input} must be in the future` });
       }
     }
   });
@@ -132,8 +138,8 @@ function isAlreadyFinished(req, res, next) {
 }
 
 const reservationExists = async (req, res, next) => {
-  const { reservation_Id } = req.params;
-  const reservation = await service.read(reservation_Id);
+  const { reservation_id } = req.params;
+  const reservation = await service.read(reservation_id);
 
   if (reservation) {
     res.locals.reservation = reservation;
@@ -141,11 +147,10 @@ const reservationExists = async (req, res, next) => {
   }
   next({
     status: 404,
-    message: `Reservation_id ${reservation_Id} does not exist.`,
+    message: `Reservation_id ${reservation_id} does not exist.`,
   });
 };
 
-//Create, Read, Update, Delete functionality, making requests to the DB utilizing express's built in functionality req, res etc..
 async function list(req, res) {
   const { date, mobile_number } = req.query;
   let reservations;
@@ -172,16 +177,43 @@ async function read(req, res) {
 }
 
 async function update(req, res, next) {
-  const { reservation_Id } = req.params;
+  const { reservation_id } = req.params;
   const { status } = req.body.data;
-  const reservation = await service.update(reservation_Id, status);
+  const reservation = await service.update(reservation_id, status);
   res.json({ data: reservation });
 }
 
 async function modify(req, res, next) {
-  const { reservation_Id } = req.params;
+  const { reservation_id } = req.params;
   const reservation = req.body.data;
-  const data = await service.modify(reservation_Id, reservation);
+
+  if (
+    !reservation.reservation_date ||
+    !reservation.reservation_time ||
+    !reservation.people
+  ) {
+    return next({
+      status: 400,
+      message: "Must include reservation_date, reservation_time, and people fields",
+    });
+  }
+
+  const [hour, minute] = reservation.reservation_time.split(":");
+  const inputDate = new Date();
+  inputDate.setHours(hour, minute, 0);
+
+  if (inputDate < new Date()) {
+    return next({ status: 400, message: `${inputDate} must be in the future` });
+  }
+
+  if (reservation.people <= 0) {
+    return next({
+      status: 400,
+      message: "People field must be a positive integer",
+    });
+  }
+
+  const data = await service.modify(reservation_id, reservation);
   reservation.reservation_id = data.reservation_id;
   res.json({ data: reservation });
 }
@@ -204,7 +236,7 @@ module.exports = {
     asyncErrorBoundary(update),
   ],
   modify: [
-    isValidReservation,
+    asyncErrorBoundary(isValidReservation),
     isNotOnTuesday,
     isInTheFuture,
     isWithinOpenHours,
