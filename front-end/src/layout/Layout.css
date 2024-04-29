@@ -1,4 +1,21 @@
+/* Clearfix hack for sidebar to properly expand and
+   contain floated elements */
+.side-bar:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
 .side-bar {
   background-color: #393a44;
   min-width: 200px;
+  padding: 20px; /* Add padding for better readability */
+}
+
+.side-bar a {
+  color: #ddd; /* Links will be white */
+}
+
+.side-bar a:hover {
+  color: #eee; /* Hover state for links */
 }
