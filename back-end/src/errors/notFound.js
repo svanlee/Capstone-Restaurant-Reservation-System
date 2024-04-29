@@ -1,8 +1,26 @@
 /**
- * Express API "Not found" handler.
+ * Express API "Not found" handler with error handling.
  */
 function notFound(req, res, next) {
-  next({ status: 404, message: `Path not found: ${req.originalUrl}` });
+  const error = new Error(`Path not found: ${req.originalUrl}`);
+  error.status = 404;
+  next(error);
 }
 
-module.exports = notFound;
+// Error handling middleware
+function errorHandler(err, req, res, next) {
+  if (res.headersSent) {
+    return next(err);
+  }
+  res.status(err.status || 500);
+  res.json({
+    message: err.message,
+    status: err.status || 500,
+    stack: err.stack,
+  });
+}
+
+module.exports = {
+  notFound,
+  errorHandler,
+};
