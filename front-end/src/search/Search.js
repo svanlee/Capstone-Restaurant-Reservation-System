@@ -6,28 +6,28 @@ import ErrorAlert from "../layout/ErrorAlert";
 export default function Search() {
   const [reservations, setReservations] = useState([]);
   const [display, setDisplay] = useState(false);
-  const [mobile, setMobile] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
   const [error, setError] = useState(null);
 
-  function changeHandler(event) {
-    setMobile(event.target.value);
-  }
+  const handleChange = (event) => {
+    setMobileNumber(event.target.value);
+  };
 
-  async function searchHandler(event) {
+  const handleSearch = async (event) => {
     event.preventDefault();
-    const abortCont = new AbortController();
+    const abortController = new AbortController();
     try {
-      const reservations = await listReservations(
-        { mobile_number: mobile },
-        abortCont.signal
+      const data = await listReservations(
+        { mobile_number: mobileNumber },
+        abortController.signal
       );
-      setReservations(reservations);
+      setReservations(data);
       setDisplay(true);
     } catch (error) {
       setError(error);
     }
-    return () => abortCont.abort();
-  }
+    return () => abortController.abort();
+  };
 
   return (
     <>
@@ -36,13 +36,13 @@ export default function Search() {
       </div>
       <ErrorAlert error={error} />
       <div className="pt-3 pb-3">
-        <form className="form-group" onSubmit={searchHandler}>
+        <form className="form-group" onSubmit={handleSearch}>
           <input
             name="mobile_number"
             id="mobile_number"
-            onChange={changeHandler}
+            onChange={handleChange}
             placeholder="Enter a customer's phone number"
-            value={mobile}
+            value={mobileNumber}
             className="form-control"
             required
           />
