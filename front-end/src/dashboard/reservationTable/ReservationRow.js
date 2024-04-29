@@ -1,14 +1,16 @@
 import React from "react";
+import PropTypes from "prop-types";
 
 export default function ReservationRow({ reservation, cancelRes }) {
-
-
   function handleCancel() {
-    return window.confirm(
-      "Do you want to cancel this reservation? This cannot be undone."
-    )
-      ? cancelRes(reservation)
-      : null;
+    if (
+      window.confirm(
+        "Do you want to cancel this reservation? This cannot be undone."
+      ) &&
+      typeof cancelRes === "function"
+    ) {
+      cancelRes(reservation);
+    }
   }
 
   return (
@@ -23,7 +25,7 @@ export default function ReservationRow({ reservation, cancelRes }) {
         {reservation.status}
       </td>
       <td>
-        {reservation.status === "booked" ? (
+        {reservation.status === "booked" && (
           <a
             className="btn btn-secondary"
             role="button"
@@ -31,7 +33,7 @@ export default function ReservationRow({ reservation, cancelRes }) {
           >
             Seat
           </a>
-        ) : null}
+        )}
       </td>
       <td>
         <a
@@ -43,16 +45,35 @@ export default function ReservationRow({ reservation, cancelRes }) {
         </a>
       </td>
       <td>
-
-       {reservation.status === "booked" ? <button
-          className="btn btn-danger"
-          data-reservation-id-cancel={reservation.reservation_id}
-          onClick={handleCancel} 
-        >
-          Cancel
-        </button>
-        : null }
+        {reservation.status === "booked" && (
+          <button
+            className="btn btn-danger"
+            data-reservation-id-cancel={reservation.reservation_id}
+            onClick={handleCancel}
+            data-testid="cancel-button"
+          >
+            Cancel
+          </button>
+        )}
       </td>
     </tr>
   );
 }
+
+ReservationRow.propTypes = {
+  reservation: PropTypes.shape({
+    reservation_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+      .isRequired,
+    first_name: PropTypes.string.isRequired,
+    last_name: PropTypes.string.isRequired,
+    mobile_number: PropTypes.string.isRequired,
+    people: PropTypes.number.isRequired,
+    reservation_time: PropTypes.string.isRequired,
+    status: PropTypes.string.isRequired,
+  }).isRequired,
+  cancelRes: PropTypes.func,
+};
+
+ReservationRow.defaultProps = {
+  cancelRes: () => {},
+};
