@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import ReservationRow from "./ReservationRow";
 import { cancelReservation } from "../../utils/api";
 import { useHistory } from "react-router-dom";
@@ -9,36 +10,30 @@ export default function ReservationTable({
   setError,
 }) {
   const history = useHistory();
-  if (!reservations) {
-    return null;
-  }
-//These are our basic helper functions that will later be called inside of clickHandlers/onSubmit Form submissions handlers, to provide built in functionality and improve our user experience.
-  async function cancelRes(reservation) {
+
+  const cancelRes = async (reservation) => {
     try {
       const { status } = await cancelReservation(reservation.reservation_id);
-      const updated = reservations.map((res) => {
-        if (res.reservation_id === reservation.reservation_id) {
-          res.status = status;
-        }
-        return res;
-      });
+      const updated = reservations.map((res) =>
+        res.reservation_id === reservation.reservation_id
+          ? { ...res, status }
+          : res
+      );
       setReservations(updated);
       history.go(`/dashboard?date=${reservation.reservation_date}`);
     } catch (error) {
       setError(error);
     }
-  }
+  };
 
-  const formatted = reservations.map((res) => {
-    return (
-      <ReservationRow
-        key={res.reservation_id}
-        reservation={res}
-        cancelRes={cancelRes}
-      />
-    );
-  });
-//Our HTML5 table below to display the inputted information for Reservations
+  const formatted = reservations.map((res) => (
+    <ReservationRow
+      key={res.reservation_id}
+      reservation={res}
+      cancelRes={cancelRes}
+    />
+  ));
+
   return (
     <>
       <table className="table table-sm table-striped table-bordered">
@@ -53,11 +48,39 @@ export default function ReservationTable({
             <th scope="col">Status</th>
             <th scope="col">Seat</th>
             <th scope="col">Edit</th>
-            <th scope="col">Cancel</th>
+            <th scope="col">
+              <button
+                type="button"
+                className="btn btn-link text-danger"
+                data-testid="cancel-btn"
+              >
+                Cancel
+              </button>
+            </th>
           </tr>
         </thead>
-        <tbody>{formatted}</tbody>
+        <tbody data-testid="reservations-tbody">{formatted}</tbody>
       </table>
     </>
   );
 }
+
+ReservationTable.propTypes = {
+  reservations: PropTypes.arrayOf(
+    PropTypes.shape({
+      reservation_id: PropTypes.number.isRequired,
+    })
+  ).isRequired,
+  setReservations: PropTypes.func.isRequired,
+  setError: PropTypes.func.isRequired,
+};
+
+ReservationRow.propTypes = {
+  reservation: PropTypes.shape({
+    reservation_id: PropTypes.number.isRequired,
+  }).isRequired,
+  cancelRes: PropTypes.func.isRequired,
+};
+
+
+npm install prop-types
