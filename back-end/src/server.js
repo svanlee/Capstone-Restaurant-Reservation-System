@@ -1,19 +1,20 @@
 const { PORT = 5001 } = process.env;
-
 const app = require("./app");
 const knex = require("./db/connection");
 
-knex.migrate
-  .latest()
-  .then((migrations) => {
-    console.log("migrations", migrations);
-    app.listen(PORT, listener);
-  })
-  .catch((error) => {
-    console.error(error);
+const migrateAndListen = async () => {
+  try {
+    await knex.migrate.latest();
+    console.log("Database migrations completed.");
+    app.listen(PORT, () => {
+      console.log(`Listening on port ${PORT}...`);
+    });
+  } catch (error) {
+    console.error("Error during migration or server start:", error);
     knex.destroy();
-  });
+    process.exit(1);
+  }
+};
 
-function listener() {
-  console.log(`Listening on Port ${PORT}!`);
-}
+migrateAndListen();
+
