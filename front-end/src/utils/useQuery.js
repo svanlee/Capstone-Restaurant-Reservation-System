@@ -1,5 +1,5 @@
 /**
- * useQuery is a custom hook that makes use of the useLocation and the URL class to parse the query parameters.
+ * useQuery is a custom hook that makes use of the useLocation and the URLSearchParams class to parse the query parameters.
  *
  * @example
  *
@@ -10,7 +10,22 @@
 import { useLocation } from "react-router-dom";
 
 function useQuery() {
-  return new URLSearchParams(useLocation().search);
+  const { search } = useLocation();
+  const urlParams = new URLSearchParams(search);
+
+  // Add a function to parse query parameters as an object
+  const queryParams = Object.fromEntries(urlParams.entries());
+
+  // Add a function to update query parameters
+  const setQueryParam = (param, value) => {
+    const newUrlParams = new URLSearchParams(queryParams);
+    newUrlParams.set(param, value);
+    const newUrl = `${window.location.pathname}?${newUrlParams.toString()}`;
+    window.history.pushState({}, "", newUrl);
+    window.location.reload();
+  };
+
+  return { queryParams, setQueryParam };
 }
 
 export default useQuery;
